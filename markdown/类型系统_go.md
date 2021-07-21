@@ -1,6 +1,6 @@
 
 [toc]
-
+## 语言逻辑层
 ### 接口
 > 接口在go语言中的用途
 
@@ -72,5 +72,58 @@ func Sort(x Sorter) {
 ```go
 var file1 Writer := ...
 if demo, ok := file.(isWriter);ok{
+}
+```
+
+
+## 底层
+### 类型元数据
+* 全局唯一
+* 用于描述类型本身
+#### 存储内容
+* 类型名称
+* 类型大小
+* 对齐边界
+* 是否自定义（区分内置类型和自定义类型）
+* ..etc
+##### 结构体
+<!-- * _type + 其他描述信息 + uncommontype(若为自定义类型) -->
+* 内置类型为 _type + 其他描述信息 如下demo1
+* 自定义类型为 _type + 其他描述信息 +  ncommontype
+```go
+// runtime._type
+type _type struct {
+  size uintptr //
+  ptrdata uintptr
+  hash uint32
+  tflag tflag
+  align uint8
+  fieldalign uint8
+  kind uint8
+  ...
+}
+type uncommontype struct {
+  pkgpath nameOff //记录类型所在包路径
+  mcount uint16   // 记录该类型关联的方法数目
+  ...    uint16   
+  moff   uint16   // 方法元数据组成的数组在内存中相对偏移量，用于定位类型绑定的方法
+  ...    uint16
+}
+
+
+// 方法类型元数据
+type method struct {
+  name nameOff
+  mtyp typeOff
+  ifn textOff
+  tfn textOff
+}
+
+
+
+//demo1
+type slicetype struct {
+  typ _type
+  elem *_type // 指向slice内部存储元素类型的元数据
 }
 ```
