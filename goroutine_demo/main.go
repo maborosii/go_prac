@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
 // import (
@@ -19,23 +20,71 @@ import (
 // 	time.Sleep(time.Second)
 // }
 
-func Count(ch chan int) {
-	fmt.Println("Counting")
-	ch <- 1
+// func Count(ch chan int) {
+// 	fmt.Println("Counting")
+// 	ch <- 1
 
-}
+// }
+
+var strChan = make(chan string, 3)
 
 func main() {
-	chs := make([]chan int, 10)
-	for i := 0; i < 10; i++ {
-		chs[i] = make(chan int)
-		go Count(chs[i])
-	}
-	fmt.Println(len(chs))
-	for _, ch := range chs {
-		fmt.Println("*")
-		<-ch
-	}
+	// chs := make([]chan int, 10)
+	// for i := 0; i < 10; i++ {
+	// 	chs[i] = make(chan int)
+	// 	go Count(chs[i])
+	// }
+	// fmt.Println(len(chs))
+	// for _, ch := range chs {
+	// 	fmt.Println("*")
+	// 	<-ch
+	// }
+	// name := []string{"aa", "cc", "dd"}
+	// for _, n := range name {
+
+	// 	go func(who string) {
+	// 		fmt.Println("呵呵", who)
+	// 	}(n)
+	// }
+	syncChan1 := make(chan struct{}, 2) // 存储空结构体通道
+	syncChan2 := make(chan struct{}, 2)
+	go func() { //reveiver
+		<-syncChan1
+		fmt.Println("waiting a second... [reveiver]")
+		time.Sleep(1 * time.Second)
+		for {
+			if elem, ok := <-strChan; ok {
+				fmt.Println("Received:", elem, "[receiver]")
+			} else {
+				break
+			}
+		}
+		fmt.Println("Stopped. [receiver]")
+		syncChan2 <- struct{}{}
+	}()
+
+	go func() { //sender
+		for _, elem := range []string{"a", "b", "c", "d"} {
+			strChan <- elem
+			fmt.Println("Sent:", elem, "[sender]")
+			if elem == "c" {
+				syncChan1 <- struct{}{}
+				fmt.Println("Send a sync signal. [sender]")
+			}
+
+		}
+		fmt.Println("waiting two seconds... [sender]")
+		time.Sleep(2 * time.Second)
+
+		close(strChan)
+		syncChan2 <- struct{}{}
+	}()
+	<-syncChan2
+	<-syncChan2
+
+	// // name = "bbb"
+	// time.Sleep(100 * time.Millisecond)
+
 }
 
 // func main() {
