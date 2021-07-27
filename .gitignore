@@ -4,3 +4,4 @@ _*
 .vscode/
 !.gitignore
 db.conf
+*.sql
