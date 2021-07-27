@@ -1,4 +1,4 @@
-module dbconfig
+module excelfromdb
 
 go 1.16
 

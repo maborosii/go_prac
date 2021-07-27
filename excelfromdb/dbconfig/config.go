@@ -1,4 +1,7 @@
-package config
+/* 在数据库中字段类型为bit类型的查询会有问题，需要进行转码
+ */
+
+package dbconfig
 
 import (
 	"database/sql"
@@ -65,11 +68,11 @@ func (dbconfig *DBConfig) InitConnector() *sql.DB {
 	return db
 }
 
-func (dbconfig *DBConfig) QuerySql(db *sql.DB, dynamicsql string) [][]string {
+func (dbconfig *DBConfig) QuerySql(db *sql.DB, dynamicsql string, args ...interface{}) [][]string {
 	/* 查询
 	 */
 	defer db.Close()
-	rows, err := db.Query(dynamicsql)
+	rows, err := db.Query(dynamicsql, args...)
 
 	if err != nil {
 		panic(err)
@@ -81,6 +84,7 @@ func (dbconfig *DBConfig) QuerySql(db *sql.DB, dynamicsql string) [][]string {
 	}
 
 	values := make([]sql.RawBytes, len(columns))
+	// values := make([][]byte, len(columns))
 	scanArgs := make([]interface{}, len(values))
 	for i := range values {
 		// 将*sqlRawBytes赋值给空接口，方便传入rows.Scan(dest ...interface{})
@@ -91,6 +95,8 @@ func (dbconfig *DBConfig) QuerySql(db *sql.DB, dynamicsql string) [][]string {
 	totalValues := make([][]string, 0)
 
 	totalValues = append(totalValues, columns)
+
+	defer rows.Close()
 	for rows.Next() {
 
 		var s []string
