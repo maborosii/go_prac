@@ -1,84 +1,79 @@
-// package main
+package main
 
-// import (
-// 	"fmt"
-// 	"strings"
+import (
+	"flag"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 
-// 	"github.com/zouyx/agollo/v4"
-// 	"github.com/zouyx/agollo/v4/env/config"
-// )
+	"github.com/zouyx/agollo/v4"
+	"github.com/zouyx/agollo/v4/env/config"
+)
 
-// // convert apollo config  namespacename to lcoal config filename
-// func ConfiFileName(namespace string) (filename string) {
-// 	filename = strings.TrimSuffix(namespace, ".txt")
-// 	p := strings.LastIndex(filename, "_")
-// 	filename = filename[:p] + "." + filename[p+1:]
-// 	return
+func ConfiFileName(namespace string) (filename string) {
+	/*convert apollo config  namespacename to lcoal config filename
+	 */
+	filename = strings.TrimSuffix(namespace, ".txt")
+	p := strings.LastIndex(filename, "_")
+	filename = filename[:p] + "." + filename[p+1:]
+	return
 
-// }
+}
 
-// func main() {
-// 	c := &config.AppConfig{
-// 		AppID:          "SampleApp",
-// 		Cluster:        "default",
-// 		IP:             "http://172.30.64.207:50080",
-// 		NamespaceName:  "application_yml.txt",
-// 		IsBackupConfig: false,
-// 		Secret:         "",
-// 	}
+func SaveConfigFile(parentpath string, filename string, content string) {
+	/* 默认path为当前执行路径
+	 */
+	f, err := os.Create(path.Join(parentpath, filename))
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
 
-// 	agollo.SetLogger(&DefaultLogger{})
+	f.WriteString(content)
+}
 
-// 	client, err := agollo.StartWithConfig(func() (*config.AppConfig, error) {
-// 		return c, nil
-// 	})
+func GetPath() string {
+	allargs := os.Args
+	if len(allargs) == 1 {
+		default_path, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			panic(err)
+		}
+		return default_path
+	}
+	customize_path := flag.String("path", os.Args[0], "configfile's location")
+	flag.Parse()
+	return *customize_path
+}
 
-// 	if err != nil {
-// 		fmt.Println("err:", err)
-// 		panic(err)
-// 	}
+func main() {
+	c := &config.AppConfig{
+		AppID:          "SampleApp",
+		Cluster:        "sheng-pro",
+		IP:             "http://173.16.37.170:50080",
+		NamespaceName:  "application_properties.txt",
+		IsBackupConfig: false,
+		Secret:         "",
+	}
 
-// 	// checkKey(c.NamespaceName, client)
-// 	conf := client.GetConfig(c.NamespaceName)
-// 	fmt.Println(strings.TrimPrefix(conf.GetContent(), "content="))
-// 	fmt.Println(ConfiFileName(c.NamespaceName))
+	// agollo.SetLogger(&DefaultLogger{})
 
-// 	// c = &config.AppConfig{
-// 	// 	AppID:          "hk109",
-// 	// 	Cluster:        "dev",
-// 	// 	IP:             "http://106.54.227.205:8080",
-// 	// 	NamespaceName:  "dubbo",
-// 	// 	IsBackupConfig: false,
-// 	// 	Secret:         "6ce3ff7e96a24335a9634fe9abca6d51",
-// 	// }
+	client, err := agollo.StartWithConfig(func() (*config.AppConfig, error) {
+		return c, nil
+	})
 
-// 	// client, err = agollo.StartWithConfig(func() (*config.AppConfig, error) {
-// 	// 	return c, nil
-// 	// })
+	if err != nil {
+		panic(err)
+	}
 
-// 	// if err != nil {
-// 	// 	fmt.Println("err:", err)
-// 	// 	panic(err)
-// 	// }
-
-// 	// checkKey(c.NamespaceName, client)
-
-// 	// time.Sleep(5 * time.Second)
-// }
-
-// // func checkKey(namespace string, client *agollo.Client) {
-// // 	cache := client.GetConfigCache(namespace)
-// // 	count := 0
-// // 	cache.Range(func(key, value interface{}) bool {
-// // 		fmt.Printf("%s=%s\n", key, value)
-// // 		count++
-// // 		return true
-// // 	})
-// // 	if count < 1 {
-// // 		panic("config key can not be null")
-// // 	}
-// // 	// fmt.Println(count)
-// // }
+	conf := client.GetConfig(c.NamespaceName)
+	content := strings.TrimPrefix(conf.GetContent(), "content=")
+	content = strings.Replace(content, "\r", "", -1)
+	// fmt.Println(content)
+	SaveConfigFile(GetPath(), ConfiFileName(c.NamespaceName), content)
+	// fmt.Println(ConfiFileName(c.NamespaceName))
+}
 
 // type DefaultLogger struct {
 // }
