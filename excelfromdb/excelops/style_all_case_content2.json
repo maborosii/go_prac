@@ -30,5 +30,13 @@
         "family": "Microsoft YaHei",
         "size": 11,
         "color": "#000000"
-    }
+    },
+    "fill": {
+		"type": "pattern",
+		"color": [
+			"#DFF8FF"
+		],
+		"pattern": 1,
+        "Shading": 1
+	}
 }

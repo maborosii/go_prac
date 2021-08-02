@@ -26,7 +26,7 @@
         "vertical": "center"
     },
     "font": {
-        "bold": false,
+        "bold": true,
         "family": "Microsoft YaHei",
         "size": 11,
         "color": "#000000"

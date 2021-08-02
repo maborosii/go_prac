@@ -23,12 +23,12 @@
     ],
     "alignment": {
         "horizontal": "center",
-        "vertical": ""
+        "vertical": "center"
     },
     "font": {
         "bold": true,
         "family": "Microsoft YaHei",
-        "size": 11,
-        "color": "#000000"
+        "size": 10,
+        "color": "#ff0000"
     }
 }

@@ -1,10 +1,11 @@
 package main
 
 import (
-	"excelfromdb/dbconfig"
+	_ "excelfromdb/dbconfig"
 	"excelfromdb/excelops"
-	"excelfromdb/sqlinfo"
+	_ "excelfromdb/sqlinfo"
 
+	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -13,13 +14,13 @@ func main() {
 	// init
 
 	// -----------------  local_config
-	node := "apollo_mysql"
-	configfile := &dbconfig.ConfigFile{FileName: "dbconfig/db.conf"}
+	// node := "apollo_mysql"
+	// configfile := &dbconfig.ConfigFile{FileName: "dbconfig/db.conf"}
 
-	mm := sqlinfo.Newdemosql()
+	// mm := sqlinfo.Newdemosql()
 
-	mm.BuildSqlParams()
-	mm.BuildSql("sqlinfo/demo.sql")
+	// mm.BuildSqlParams()
+	// mm.BuildSql("sqlinfo/demo.sql")
 
 	// -----------------  server_config
 	// node := "law_case_review"
@@ -29,12 +30,33 @@ func main() {
 
 	// mm.BuildSqlParams()
 	// mm.BuildSql("/root/golang/sqlinfo/dailycaseinfo.sql")
+	f := excelize.NewFile()
 
-	local_config := dbconfig.ImportConfig(configfile, node)
+	index := f.NewSheet("Sheet1")
 
-	db := local_config.InitConnector()
+	style_title1 := excelops.GetStyle(f, "excelops/style_all_case_title1.json")
+	style_title2 := excelops.GetStyle(f, "excelops/style_all_case_title2.json")
+	style_content1 := excelops.GetStyle(f, "excelops/style_all_case_content1.json")
+	style_content2 := excelops.GetStyle(f, "excelops/style_all_case_content2.json")
+	for _, cell := range *excelops.GetTitle(style_title1, style_title2) {
+		excelops.Formatting(&cell, "Sheet1", f)
+		excelops.Writing(&cell, "Sheet1", f)
+	}
 
-	allrecords := local_config.QuerySql(db, mm.GetSql(), mm.GetParams()...)
+	for _, cell := range *excelops.GetCityContent(style_content1, style_content2, 3) {
+		excelops.Formatting(&cell, "Sheet1", f)
+		excelops.Writing(&cell, "Sheet1", f)
+	}
+	f.SetActiveSheet(index)
+	if err := f.SaveAs("test1.xlsx"); err != nil {
+		panic(err)
+	}
 
-	excelops.GenerateExcelByRows(allrecords, "books.xlsx")
+	// local_config := dbconfig.ImportConfig(configfile, node)
+
+	// db := local_config.InitConnector()
+
+	// allrecords := local_config.QuerySql(db, mm.GetSql(), mm.GetParams()...)
+
+	// excelops.GenerateExcelByRows(allrecords, "books.xlsx")
 }
