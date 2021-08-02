@@ -5,3 +5,4 @@ _*
 !.gitignore
 db.conf
 *.sql
+.xlsx
