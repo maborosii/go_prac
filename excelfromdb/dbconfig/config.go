@@ -38,7 +38,6 @@ func ImportConfig(path *ConfigFile, node string) *DBConfig {
 		fmt.Printf("Fail to find section %s: %v", node, err)
 
 	}
-	fmt.Println(*dbconfig)
 	return dbconfig
 
 }
@@ -71,10 +70,6 @@ func (dbconfig *DBConfig) InitConnector() *sql.DB {
 func (dbconfig *DBConfig) QuerySql(db *sql.DB, dynamicsql string, args ...interface{}) [][]string {
 	/* 查询
 	 */
-	defer func() {
-		db.Close()
-		fmt.Println("连接已关闭！")
-	}()
 	rows, err := db.Query(dynamicsql, args...)
 
 	if err != nil {
@@ -122,4 +117,12 @@ func (dbconfig *DBConfig) QuerySql(db *sql.DB, dynamicsql string, args ...interf
 		panic(err.Error())
 	}
 	return totalValues
+}
+
+func (dbconfig *DBConfig) CloseConnector(db *sql.DB) {
+	err := db.Close()
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println("连接已关闭！")
 }

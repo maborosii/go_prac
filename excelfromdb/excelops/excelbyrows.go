@@ -6,27 +6,15 @@ import (
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 )
 
-func GenerateExcelByRows(allrows [][]string, outputfile string) {
-	f := excelize.NewFile()
-
-	index := f.NewSheet("Sheet1")
+func GenerateExcelByRows(f *excelize.File, sheetname string, allrows [][]string) {
 
 	for i, row := range allrows {
 		// for j, filed := range row {
 		// 	f.SetCellValue("Sheet1", ChangIndexToAxis(j, i), filed)
 		// }
-		f.SetSheetRow("Sheet1", "A"+strconv.Itoa(i+1), &row)
+		f.SetSheetRow(sheetname, "A"+strconv.Itoa(i+1), &row)
 	}
 
-	// f := excelize.NewFile()
-	// if err := f.SetColWidth("Sheet1", "A", "A", 20); err != nil {
-	// 	panic(err.Error())
-	// }
-
-	f.SetActiveSheet(index)
-	if err := f.SaveAs(outputfile); err != nil {
-		panic(err.Error())
-	}
 }
 
 // func ChangIndexToAxis(intIndexX int, intIndexY int) string {

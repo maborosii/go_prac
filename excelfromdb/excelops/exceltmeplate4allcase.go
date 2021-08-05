@@ -17,7 +17,14 @@
 
 package excelops
 
-import "strconv"
+import (
+	"strconv"
+	"time"
+)
+
+func gettime() string {
+	return time.Now().AddDate(0, 0, 0).Format("01月02日")
+}
 
 func GetTitle(style1, style2 int) *[]Cell {
 	title := []Cell{
@@ -60,7 +67,7 @@ func GetTitle(style1, style2 int) *[]Cell {
 			Xwidth:  []float64{16},
 			Yheight: []float64{31},
 			Format:  style1,
-			Content: "7月19日"},
+			Content: gettime()},
 		{
 			IsMerge: false,
 			Xzone:   []string{"e"},
@@ -74,26 +81,21 @@ func GetTitle(style1, style2 int) *[]Cell {
 	return &title
 }
 
-func GetCityContent(style1, style2, start_index_y int) *[]Cell {
+func GetCityContent(style1, style2, start_index_y int, citychan chan *[]Cell, citycell chan *[][]Cell, city string) {
 	c_columns_content := []string{"下发评查任务数量", "接收评查任务数量", "上报案件数量",
 		"上报案卷资料数量", "评查案卷数量", "评查单确认已完成数量", "已生成案卷评查结果数量"}
 	c_columns_style := []int{style2, style1, style2, style1, style1, style1, style2}
 
+	slice4b_colums_Yzone := []int{}
+	slice4b_colums_Yheight := []float64{}
+
 	a_columns := []Cell{}
-	b_columns := []Cell{
-		{
-			IsMerge: true,
-			Xzone:   []string{"b"},
-			Yzone:   []int{3, 4, 5, 6, 7, 8, 9},
-			Xwidth:  []float64{10},
-			Yheight: []float64{16.5, 16.5, 16.5, 16.5, 16.5, 16.5, 16.5},
-			Format:  style1,
-			Content: "省司法厅",
-		},
-	}
 	c_columns := []Cell{}
 	d_columns := []Cell{}
 	e_columns := []Cell{}
+
+	inputareacell := [][]Cell{}
+
 	citycontent := []Cell{}
 	for i := start_index_y; i < start_index_y+7; i++ {
 		a_columns = append(a_columns, Cell{
@@ -103,7 +105,7 @@ func GetCityContent(style1, style2, start_index_y int) *[]Cell {
 			Xwidth:  []float64{10},
 			Yheight: []float64{16.5},
 			Format:  style1,
-			Content: strconv.Itoa(i - start_index_y + 1),
+			Content: strconv.Itoa(i - 2),
 		})
 		c_columns = append(c_columns, Cell{
 			IsMerge: false,
@@ -130,11 +132,52 @@ func GetCityContent(style1, style2, start_index_y int) *[]Cell {
 			Yheight: []float64{16.5},
 			Format:  style1,
 		})
+		slice4b_colums_Yzone = append(slice4b_colums_Yzone, i)
+		slice4b_colums_Yheight = append(slice4b_colums_Yheight, 16.5)
+	}
+	b_columns := []Cell{
+		{
+			IsMerge: true,
+			Xzone:   []string{"b"},
+			Yzone:   slice4b_colums_Yzone,
+			Xwidth:  []float64{27},
+			Yheight: slice4b_colums_Yheight,
+			Format:  style1,
+			Content: city + "司法厅",
+		},
 	}
 	citycontent = append(citycontent, a_columns...)
 	citycontent = append(citycontent, b_columns...)
 	citycontent = append(citycontent, c_columns...)
 	citycontent = append(citycontent, d_columns...)
 	citycontent = append(citycontent, e_columns...)
-	return &citycontent
+
+	inputareacell = append(inputareacell, d_columns)
+	inputareacell = append(inputareacell, e_columns)
+
+	citychan <- &citycontent
+	citycell <- &inputareacell
+
+}
+
+func GetAllCityContent(style1, style2 int, citieslist []string) (*[]Cell, *[][][]Cell) {
+	/*
+		channel 传递的是数据的拷贝
+	*/
+	// citieslist, _ := setting.GetCity(path)
+	citychan := make(chan *[]Cell, 5)
+	citycell := make(chan *[][]Cell)
+	inputareacell := [][][]Cell{}
+
+	allcitycontent := []Cell{}
+
+	for i, city := range citieslist {
+		go GetCityContent(style1, style2, i*7+3, citychan, citycell, city)
+		allcitycontent = append(allcitycontent, *<-citychan...)
+		inputareacell = append(inputareacell, *<-citycell)
+	}
+	close(citychan)
+	close(citycell)
+
+	return &allcitycontent, &inputareacell
 }

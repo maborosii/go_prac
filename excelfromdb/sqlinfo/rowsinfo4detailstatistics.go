@@ -2,16 +2,14 @@ package sqlinfo
 
 import (
 	"fmt"
-	"io/ioutil"
 	"time"
 )
 
 type dailycasesql struct {
-	sentence  string
-	sqlparams []interface{}
+	noparamssql
 }
 
-func (ds *dailycasesql) BuildSqlParams() {
+func (ds *dailycasesql) BuildSqlParams(arg ...interface{}) {
 	/* 构造dailycase的sql参数
 	 */
 	var pre_date, suf_date string
@@ -35,26 +33,6 @@ func (ds *dailycasesql) BuildSqlParams() {
 		paramsArgs[i] = &dates[i]
 	}
 	ds.sqlparams = paramsArgs
-}
-
-func (ds *dailycasesql) BuildSql(path string) {
-	dynamicsql, err := ioutil.ReadFile(path)
-
-	if err != nil {
-		panic(err)
-	}
-	sqlcontent := string(dynamicsql)
-	ds.sentence = sqlcontent
-
-}
-
-func (ds *dailycasesql) GetSql() string {
-	return ds.sentence
-
-}
-
-func (ds *dailycasesql) GetParams() []interface{} {
-	return ds.sqlparams
 }
 
 func Newdailycasesql() DynamicSql {

@@ -9,7 +9,7 @@ type noparamssql struct {
 	sqlparams []interface{}
 }
 
-func (ds *noparamssql) BuildSqlParams() {
+func (ds *noparamssql) BuildSqlParams(arg ...interface{}) {
 	/* 构造dailycase的sql参数
 	 */
 
