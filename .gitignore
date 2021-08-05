@@ -6,3 +6,4 @@ _*
 db.conf
 *.sql
 *.xlsx
+*.yaml
