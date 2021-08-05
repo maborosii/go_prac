@@ -59,6 +59,8 @@ func CaseNums() {
 		ew.InputDeltaNums(&(*inputareacell)[i][1], sheetname, f, <-aa_chan)
 
 	}
+	close(mm_chan)
+	close(aa_chan)
 
 	f.SetActiveSheet(index)
 	if err := f.SaveAs(savexlsx); err != nil {
