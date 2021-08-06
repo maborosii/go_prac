@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"excelfromdb/dbconfig"
-	ew "excelfromdb/excelwriting"
+	ew "excelfromdb/excelops/excelwriting"
 	"excelfromdb/setting"
 	"excelfromdb/sqlinfo"
 
@@ -11,9 +11,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func buildsql(sqlfile string, mm *sqlinfo.DynamicSql, sqlparams ...interface{}) {
+func buildsql(sql string, mm *sqlinfo.DynamicSql, sqlparams ...interface{}) {
 	(*mm).BuildSqlParams(sqlparams...)
-	(*mm).BuildSql(sqlfile)
+	(*mm).BuildSql(sql)
 }
 
 func getdata4nums(db *sql.DB, mm *sqlinfo.DynamicSql, config *dbconfig.DBConfig, mm_chan chan *[][]string) {
@@ -23,21 +23,23 @@ func getdata4nums(db *sql.DB, mm *sqlinfo.DynamicSql, config *dbconfig.DBConfig,
 }
 
 func CaseNums() {
-	dbconfigpath := "/root/golang/dbconfig/db.conf"
-	settingpath := "/root/golang/setting"
+	// dbconfigpath := "/root/golang/dbconfig/db.conf"
+	// settingpath := "/root/golang/setting"
 	sheetname := "Sheet1"
-	allnum_sqlpath := "/root/golang/sqlinfo/casestatistics_allnum.sql"
-	deltanum_sqlpath := "/root/golang/sqlinfo/casestatistics_deltanum.sql"
+	dbconfigname := "db.conf"
+	// allnum_sqlpath := "/root/golang/sqlinfo/casestatistics_allnum.sql"
+	// deltanum_sqlpath := "/root/golang/sqlinfo/casestatistics_deltanum.sql"
 	savexlsx := "案卷评查数据统计表.xlsx"
 	node := "law_case_review"
 
 	f := excelize.NewFile()
 	index := f.NewSheet(sheetname)
 
-	citieslist, codelist := setting.GetCity(settingpath)
+	citieslist, codelist := setting.GetCity()
 	inputareacell := ew.NumsBuildFormat(f, sheetname, citieslist)
+	ew.NumsBuildFormat(f, sheetname, citieslist)
 
-	configfile := &dbconfig.ConfigFile{FileName: dbconfigpath}
+	configfile := dbconfig.Newconfigfile(dbconf, dbconfigname)
 	local_config := dbconfig.ImportConfig(configfile, node)
 	db := local_config.InitConnector()
 	defer func() {
@@ -51,8 +53,8 @@ func CaseNums() {
 	aa_chan := make(chan *[][]string)
 
 	for i, code := range codelist {
-		buildsql(allnum_sqlpath, &mm, code)
-		buildsql(deltanum_sqlpath, &aa, code)
+		buildsql(caseallnum_sql, &mm, code)
+		buildsql(casedeltanum_sql, &aa, code)
 		go getdata4nums(db, &mm, local_config, mm_chan)
 		go getdata4nums(db, &aa, local_config, aa_chan)
 		ew.InputAllNums(&(*inputareacell)[i][0], sheetname, f, <-mm_chan)

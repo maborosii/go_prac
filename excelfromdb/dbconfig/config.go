@@ -5,13 +5,20 @@ package dbconfig
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
 
 	"gopkg.in/ini.v1"
 )
 
-type ConfigFile struct {
-	FileName string
+type configfile struct {
+	fileinmem embed.FS
+	name      string
+}
+
+func Newconfigfile(realfile embed.FS, filename string) *configfile {
+	return &configfile{fileinmem: realfile, name: filename}
+
 }
 
 type DBConfig struct {
@@ -23,12 +30,18 @@ type DBConfig struct {
 	Port     int32  `ini:"DB_PORT"`
 }
 
-func ImportConfig(path *ConfigFile, node string) *DBConfig {
+func ImportConfig(file *configfile, node string) *DBConfig {
 
-	cfg, err := ini.Load(path.FileName)
+	readfile, err := file.fileinmem.Open("dbconfig/db.conf")
+	if err != nil {
+		panic(err)
+	}
+
+	cfg, err := ini.Load(readfile)
 
 	if err != nil {
 		fmt.Printf("Fail to read file: %v", err)
+		panic(err)
 
 	}
 	dbconfig := &DBConfig{}
@@ -36,6 +49,7 @@ func ImportConfig(path *ConfigFile, node string) *DBConfig {
 
 	if err != nil {
 		fmt.Printf("Fail to find section %s: %v", node, err)
+		panic(err)
 
 	}
 	return dbconfig

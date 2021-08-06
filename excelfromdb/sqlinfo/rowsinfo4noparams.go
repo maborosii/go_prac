@@ -1,9 +1,5 @@
 package sqlinfo
 
-import (
-	"io/ioutil"
-)
-
 type noparamssql struct {
 	sentence  string
 	sqlparams []interface{}
@@ -17,14 +13,8 @@ func (ds *noparamssql) BuildSqlParams(arg ...interface{}) {
 	ds.sqlparams = demo
 }
 
-func (ds *noparamssql) BuildSql(path string) {
-	dynamicsql, err := ioutil.ReadFile(path)
-
-	if err != nil {
-		panic(err)
-	}
-	sqlcontent := string(dynamicsql)
-	ds.sentence = sqlcontent
+func (ds *noparamssql) BuildSql(sql string) {
+	ds.sentence = sql
 }
 
 func (ds *noparamssql) GetSql() string {

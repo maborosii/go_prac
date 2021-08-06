@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"excelfromdb/dbconfig"
 	"excelfromdb/excelops"
 	"excelfromdb/sqlinfo"
@@ -10,19 +11,18 @@ import (
 )
 
 func CaseDetail() {
-	dbconfigpath := "/root/golang/dbconfig/db.conf"
 	sheetname := "Sheet1"
-	detail_sqlpath := "/root/golang/sqlinfo/casestatistics_detail.sql"
+	dbconfigname := "db.conf"
 	savexlsx := "案卷每日评查情况.xlsx"
 	node := "law_case_review"
 
 	f := excelize.NewFile()
 	index := f.NewSheet(sheetname)
 
-	configfile := &dbconfig.ConfigFile{FileName: dbconfigpath}
+	configfile := dbconfig.Newconfigfile(dbconf, dbconfigname)
 
 	mm := sqlinfo.Newdailycasesql()
-	buildsql(detail_sqlpath, &mm)
+	buildsql(casedetail_sql, &mm)
 
 	local_config := dbconfig.ImportConfig(configfile, node)
 	db := local_config.InitConnector()
