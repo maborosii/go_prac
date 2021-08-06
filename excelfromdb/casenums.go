@@ -26,7 +26,7 @@ func CaseNums() {
 	// dbconfigpath := "/root/golang/dbconfig/db.conf"
 	// settingpath := "/root/golang/setting"
 	sheetname := "Sheet1"
-	dbconfigname := "db.conf"
+	dbconfigname := "dbconfig/db.conf"
 	// allnum_sqlpath := "/root/golang/sqlinfo/casestatistics_allnum.sql"
 	// deltanum_sqlpath := "/root/golang/sqlinfo/casestatistics_deltanum.sql"
 	savexlsx := "案卷评查数据统计表.xlsx"

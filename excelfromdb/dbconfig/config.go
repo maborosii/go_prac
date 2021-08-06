@@ -32,7 +32,7 @@ type DBConfig struct {
 
 func ImportConfig(file *configfile, node string) *DBConfig {
 
-	readfile, err := file.fileinmem.Open("dbconfig/db.conf")
+	readfile, err := file.fileinmem.Open(file.name)
 	if err != nil {
 		panic(err)
 	}

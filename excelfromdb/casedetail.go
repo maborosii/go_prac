@@ -12,7 +12,7 @@ import (
 
 func CaseDetail() {
 	sheetname := "Sheet1"
-	dbconfigname := "db.conf"
+	dbconfigname := "dbconfig/db.conf"
 	savexlsx := "案卷每日评查情况.xlsx"
 	node := "law_case_review"
 
