@@ -52,6 +52,7 @@ func ImportConfig(file *configfile, node string) *DBConfig {
 		panic(err)
 
 	}
+	// fmt.Println(dbconfig)
 	return dbconfig
 
 }
@@ -67,6 +68,10 @@ func (dbconfig *DBConfig) BuildConnectString() string {
 func (dbconfig *DBConfig) InitConnector() *sql.DB {
 
 	db, err := sql.Open("mysql", dbconfig.BuildConnectString())
+
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
+
 	if err != nil {
 		panic(err.Error())
 	}

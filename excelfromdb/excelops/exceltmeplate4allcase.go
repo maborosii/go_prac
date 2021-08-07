@@ -26,7 +26,7 @@ func gettime() string {
 	return time.Now().AddDate(0, 0, 0).Format("01月02日")
 }
 
-func GetTitle(style1, style2 int) *[]Cell {
+func GetTitle(style1, style2 int) []Cell {
 	title := []Cell{
 		{
 			IsMerge: true,
@@ -78,10 +78,10 @@ func GetTitle(style1, style2 int) *[]Cell {
 			Content: "当日新增数量",
 		},
 	}
-	return &title
+	return title
 }
 
-func GetCityContent(style1, style2, start_index_y int, citychan chan *[]Cell, citycell chan *[][]Cell, city string) {
+func GetCityContent(style1, style2, start_index_y int, citychan chan []Cell, citycell chan [][]Cell, city string) {
 	c_columns_content := []string{"下发评查任务数量", "接收评查任务数量", "上报案件数量",
 		"上报案卷资料数量", "评查案卷数量", "评查单确认已完成数量", "已生成案卷评查结果数量"}
 	c_columns_style := []int{style2, style1, style2, style1, style1, style1, style2}
@@ -155,29 +155,29 @@ func GetCityContent(style1, style2, start_index_y int, citychan chan *[]Cell, ci
 	inputareacell = append(inputareacell, d_columns)
 	inputareacell = append(inputareacell, e_columns)
 
-	citychan <- &citycontent
-	citycell <- &inputareacell
+	citychan <- citycontent
+	citycell <- inputareacell
 
 }
 
-func GetAllCityContent(style1, style2 int, citieslist []string) (*[]Cell, *[][][]Cell) {
+func GetAllCityContent(style1, style2 int, citieslist []string) ([]Cell, [][][]Cell) {
 	/*
 		channel 传递的是数据的拷贝
 	*/
 	// citieslist, _ := setting.GetCity(path)
-	citychan := make(chan *[]Cell, 5)
-	citycell := make(chan *[][]Cell)
+	citychan := make(chan []Cell, 5)
+	citycell := make(chan [][]Cell)
 	inputareacell := [][][]Cell{}
 
 	allcitycontent := []Cell{}
 
 	for i, city := range citieslist {
 		go GetCityContent(style1, style2, i*7+3, citychan, citycell, city)
-		allcitycontent = append(allcitycontent, *<-citychan...)
-		inputareacell = append(inputareacell, *<-citycell)
+		allcitycontent = append(allcitycontent, <-citychan...)
+		inputareacell = append(inputareacell, <-citycell)
 	}
 	close(citychan)
 	close(citycell)
 
-	return &allcitycontent, &inputareacell
+	return allcitycontent, inputareacell
 }

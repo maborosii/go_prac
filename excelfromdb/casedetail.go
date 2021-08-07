@@ -22,7 +22,7 @@ func CaseDetail() {
 	configfile := dbconfig.Newconfigfile(dbconf, dbconfigname)
 
 	mm := sqlinfo.Newdailycasesql()
-	buildsql(casedetail_sql, &mm)
+	buildsql(casedetail_sql, mm)
 
 	local_config := dbconfig.ImportConfig(configfile, node)
 	db := local_config.InitConnector()
