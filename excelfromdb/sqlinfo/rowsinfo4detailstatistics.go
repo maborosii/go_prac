@@ -1,7 +1,6 @@
 package sqlinfo
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -26,7 +25,7 @@ func (ds *dailycasesql) BuildSqlParams(arg ...interface{}) {
 	}
 	dates = append(dates, pre_date, suf_date)
 
-	fmt.Println(dates)
+	// fmt.Println(dates)
 
 	paramsArgs := make([]interface{}, len(dates))
 	for i := range dates {

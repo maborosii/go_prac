@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"excelfromdb/dbconfig"
 	ew "excelfromdb/excelops/excelwriting"
+	. "excelfromdb/locallog"
 	"excelfromdb/setting"
 	"excelfromdb/sqlinfo"
 
@@ -24,7 +25,6 @@ func getdata4nums(db *sql.DB, mm sqlinfo.DynamicSql, config *dbconfig.DBConfig, 
 
 func CaseNums() {
 	sheetname := "Sheet1"
-	dbconfigname := "dbconfig/db.conf"
 	savexlsx := "案卷评查数据统计表.xlsx"
 	node := "law_case_review"
 
@@ -35,7 +35,6 @@ func CaseNums() {
 	inputareacell := ew.NumsBuildFormat(f, sheetname, citieslist)
 	ew.NumsBuildFormat(f, sheetname, citieslist)
 
-	configfile := dbconfig.Newconfigfile(dbconf, dbconfigname)
 	local_config := dbconfig.ImportConfig(configfile, node)
 
 	db := local_config.InitConnector()
@@ -63,6 +62,6 @@ func CaseNums() {
 
 	f.SetActiveSheet(index)
 	if err := f.SaveAs(savexlsx); err != nil {
-		panic(err)
+		Log.Fatal(err)
 	}
 }

@@ -1,9 +1,11 @@
 package main
 
+// import . "excelfromdb/locallog"
+
 func main() {
 	// CaseDetail()
-	// CaseNums()
-	// PublicitySix()
-	// PublicityInfo()
-	AcessStat()
+	CaseNums()
+	// Publictiy()
+
+	// Log.Info("info message")
 }

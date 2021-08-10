@@ -6,6 +6,7 @@ package dbconfig
 import (
 	"database/sql"
 	"embed"
+	. "excelfromdb/locallog"
 	"fmt"
 
 	"gopkg.in/ini.v1"
@@ -16,8 +17,12 @@ type configfile struct {
 	name      string
 }
 
-func Newconfigfile(realfile embed.FS, filename string) *configfile {
-	return &configfile{fileinmem: realfile, name: filename}
+type CreateConfigfile func(realfile embed.FS, filename string) *configfile
+
+func Newconfigfile() CreateConfigfile {
+	return func(realfile embed.FS, filename string) *configfile {
+		return &configfile{fileinmem: realfile, name: filename}
+	}
 
 }
 
@@ -34,25 +39,22 @@ func ImportConfig(file *configfile, node string) *DBConfig {
 
 	readfile, err := file.fileinmem.Open(file.name)
 	if err != nil {
-		panic(err)
+		Log.Fatal(err)
 	}
 
 	cfg, err := ini.Load(readfile)
 
 	if err != nil {
-		fmt.Printf("Fail to read file: %v", err)
-		panic(err)
+		Log.Fatal("Fail to read file: %v", err)
 
 	}
 	dbconfig := &DBConfig{}
 	err = cfg.Section(node).MapTo(dbconfig)
 
 	if err != nil {
-		fmt.Printf("Fail to find section %s: %v", node, err)
-		panic(err)
+		Log.Fatal("Fail to find section %s: %v", node, err)
 
 	}
-	// fmt.Println(dbconfig)
 	return dbconfig
 
 }
@@ -73,15 +75,14 @@ func (dbconfig *DBConfig) InitConnector() *sql.DB {
 	db.SetMaxIdleConns(5)
 
 	if err != nil {
-		panic(err.Error())
+		Log.Fatal(err)
 	}
-	// defer db.Close()
 
 	err = db.Ping()
 	if err != nil {
-		panic(err.Error())
+		Log.Fatal(err)
 	}
-	fmt.Println("连接已建立！")
+	Log.Info("连接已建立")
 
 	return db
 }
@@ -92,12 +93,12 @@ func (dbconfig *DBConfig) QuerySql(db *sql.DB, dynamicsql string, args ...interf
 	rows, err := db.Query(dynamicsql, args...)
 
 	if err != nil {
-		panic(err)
+		Log.Fatal(err)
 	}
 
 	columns, err := rows.Columns()
 	if err != nil {
-		panic(err.Error())
+		Log.Fatal(err)
 	}
 
 	values := make([]sql.RawBytes, len(columns))
@@ -122,7 +123,7 @@ func (dbconfig *DBConfig) QuerySql(db *sql.DB, dynamicsql string, args ...interf
 		err = rows.Scan(scanArgs...)
 
 		if err != nil {
-			panic(err.Error())
+			Log.Fatal(err)
 		}
 
 		for _, v := range values {
@@ -130,10 +131,10 @@ func (dbconfig *DBConfig) QuerySql(db *sql.DB, dynamicsql string, args ...interf
 		}
 		totalValues = append(totalValues, s)
 	}
-	fmt.Println(totalValues)
+	Log.Info(totalValues)
 
 	if err = rows.Err(); err != nil {
-		panic(err.Error())
+		Log.Fatal(err)
 	}
 	return totalValues
 }
@@ -141,7 +142,7 @@ func (dbconfig *DBConfig) QuerySql(db *sql.DB, dynamicsql string, args ...interf
 func (dbconfig *DBConfig) CloseConnector(db *sql.DB) {
 	err := db.Close()
 	if err != nil {
-		panic(err.Error())
+		Log.Fatal(err)
 	}
-	fmt.Println("连接已关闭！")
+	Log.Info("连接已关闭")
 }

@@ -22,8 +22,17 @@
   * 即一个内核线程，goroutine运行在其中
 * P / processor
   * goroutine的上下文空间，即其所需要的资源。P的数量也代表了真正的并发数
-* G / goroutine
+* G / goroutine --- 用户态线程
   * goroutine的运行需要前两者的配合
 * 三者依赖
   * 
 #####  工作流
+
+#### goroutine调度器的设计策略
+##### 复用线程
+###### work stealing
+###### hand off
+
+##### 利用并行
+##### 抢占
+##### 全局G队列

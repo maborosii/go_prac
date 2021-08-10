@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"excelfromdb/dbconfig"
 	"excelfromdb/excelops"
+	. "excelfromdb/locallog"
 	"excelfromdb/sqlinfo"
 
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
@@ -12,14 +13,11 @@ import (
 
 func CaseDetail() {
 	sheetname := "Sheet1"
-	dbconfigname := "dbconfig/db.conf"
 	savexlsx := "案卷每日评查情况.xlsx"
 	node := "law_case_review"
 
 	f := excelize.NewFile()
 	index := f.NewSheet(sheetname)
-
-	configfile := dbconfig.Newconfigfile(dbconf, dbconfigname)
 
 	mm := sqlinfo.Newdailycasesql()
 	buildsql(casedetail_sql, mm)
@@ -35,6 +33,6 @@ func CaseDetail() {
 
 	f.SetActiveSheet(index)
 	if err := f.SaveAs(savexlsx); err != nil {
-		panic(err)
+		Log.Fatal(err)
 	}
 }

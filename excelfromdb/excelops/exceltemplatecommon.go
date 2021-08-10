@@ -1,6 +1,7 @@
 package excelops
 
 import (
+	. "excelfromdb/locallog"
 	"strconv"
 
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
@@ -29,7 +30,7 @@ type Write2Xlsx interface {
 func (cl *Cell) SetWidth(sheetname string, f *excelize.File) {
 	for i, strX := range cl.Xzone {
 		if err := f.SetColWidth(sheetname, strX, strX, cl.Xwidth[i]); err != nil {
-			panic(err)
+			Log.Fatal(err)
 		}
 	}
 }
@@ -37,7 +38,7 @@ func (cl *Cell) SetWidth(sheetname string, f *excelize.File) {
 func (cl *Cell) SetHeight(sheetname string, f *excelize.File) {
 	for i, intY := range cl.Yzone {
 		if err := f.SetRowHeight(sheetname, intY, cl.Yheight[i]); err != nil {
-			panic(err)
+			Log.Fatal(err)
 		}
 	}
 }
@@ -46,7 +47,7 @@ func (cl *Cell) MergeCell(sheetname string, f *excelize.File) {
 	if cl.IsMerge {
 		if err := f.MergeCell(sheetname, cl.Xzone[0]+strconv.Itoa(cl.Yzone[0]),
 			cl.Xzone[len(cl.Xzone)-1]+strconv.Itoa(cl.Yzone[len(cl.Yzone)-1])); err != nil {
-			panic(err)
+			Log.Fatal(err)
 		}
 	}
 }
@@ -55,13 +56,13 @@ func (cl *Cell) SetFormat(sheetname string, f *excelize.File) {
 	err := f.SetCellStyle(sheetname, cl.Xzone[0]+strconv.Itoa(cl.Yzone[0]),
 		cl.Xzone[len(cl.Xzone)-1]+strconv.Itoa(cl.Yzone[len(cl.Yzone)-1]), cl.Format)
 	if err != nil {
-		panic(err)
+		Log.Fatal(err)
 	}
 }
 func (cl *Cell) SetValue(sheetname string, f *excelize.File) {
 	err := f.SetCellValue(sheetname, cl.Xzone[0]+strconv.Itoa(cl.Yzone[0]), cl.Content)
 	if err != nil {
-		panic(err)
+		Log.Fatal(err)
 	}
 }
 

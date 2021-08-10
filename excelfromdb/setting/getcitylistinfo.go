@@ -2,6 +2,7 @@ package setting
 
 import (
 	"embed"
+	. "excelfromdb/locallog"
 	"reflect"
 
 	"github.com/spf13/viper"
@@ -23,11 +24,11 @@ func GetCity() ([]string, []string) {
 	iofile, err := cityfile.ReadFile("citylist.yaml")
 
 	if err != nil {
-		panic(err)
+		Log.Fatal(err)
 	}
 	if err = config.ReadIOInConfig(iofile); err != nil {
 		// 这里修改了viper的源码，增加了读取fs.file的选项
-		panic(err)
+		Log.Fatal(err)
 	}
 
 	c := reflect.ValueOf(config.Get("cities.name"))

@@ -1,8 +1,15 @@
 package main
 
-import "embed"
+import (
+	"embed"
+	"excelfromdb/dbconfig"
+)
 
 type path string
+
+var (
+	dbconfigname = "dbconfig/db.conf"
+)
 
 var (
 	//go:embed dbconfig/db.conf
@@ -51,3 +58,5 @@ var (
 	publicity_sheet    string = "03、公示采集统计"
 	acceessstat_sheet  string = "04、访问量统计"
 )
+
+var configfile = dbconfig.Newconfigfile()(dbconf, dbconfigname)
