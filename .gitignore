@@ -8,5 +8,4 @@ db.conf
 *.xlsx
 *.yaml
 *_test.go
-excelfromdb
 goclient_apollo
