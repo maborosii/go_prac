@@ -45,14 +45,14 @@ func ImportConfig(file *configfile, node string) *DBConfig {
 	cfg, err := ini.Load(readfile)
 
 	if err != nil {
-		Log.Fatal("Fail to read file: %v", err)
+		Log.Fatal("Fail to read file: ", err)
 
 	}
 	dbconfig := &DBConfig{}
 	err = cfg.Section(node).MapTo(dbconfig)
 
 	if err != nil {
-		Log.Fatal("Fail to find section %s: %v", node, err)
+		Log.Fatal("Fail to find section ", node, err)
 
 	}
 	return dbconfig
