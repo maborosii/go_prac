@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	err, paths := mysqldump.FullExport()
+	paths, err := mysqldump.FullExport()
 	if err != nil {
 		fmt.Println(err)
 	}

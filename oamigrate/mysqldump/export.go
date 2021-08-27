@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func export(tablename string) (error, string) {
+func export(tablename string) (string, error) {
 
 	dbconfig, _ := GetConfig()
 
@@ -22,18 +22,18 @@ func export(tablename string) (error, string) {
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		Log.Fatal(err)
-		return err, ""
+		return "", err
 	}
 
 	if err := cmd.Start(); err != nil {
 		Log.Fatal(err)
-		return err, ""
+		return "", err
 	}
 
 	bytes, err := ioutil.ReadAll(stdout)
 	if err != nil {
 		Log.Fatal(err)
-		return err, ""
+		return "", err
 	}
 	now := time.Now().Format("20060102150405")
 
@@ -42,12 +42,12 @@ func export(tablename string) (error, string) {
 
 	if err != nil {
 		Log.Fatal(err)
-		return err, ""
+		return "", err
 	}
-	return nil, backupPath
+	return backupPath, nil
 }
 
-func FullExport() (error, []string) {
+func FullExport() ([]string, error) {
 	// 使用 sync/errgroup 进行goroutine协程错误控制
 
 	group := new(errgroup.Group)
@@ -60,7 +60,7 @@ func FullExport() (error, []string) {
 		// 避免协程只引用最后一个变量，创建一个闭包函数的上下文变量
 		table := table
 		group.Go(func() error {
-			err, filepath := export(table)
+			filepath, err := export(table)
 			path <- &filepath
 
 			if err != nil {
@@ -73,13 +73,16 @@ func FullExport() (error, []string) {
 
 	}
 
-	tablepaths = append(tablepaths, *(<-path))
-	Log.Info(tablepaths)
+	// tablepaths = append(tablepaths, *(<-path))
+	// Log.Info(tablepaths)
 	if err := group.Wait(); err != nil {
 		Log.Fatal(err)
 	} else {
 		Log.Info("all table export success")
+		tablepaths = append(tablepaths, *(<-path))
+		Log.Info(tablepaths)
 	}
+
 	close(path)
-	return nil, tablepaths
+	return tablepaths, nil
 }
