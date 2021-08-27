@@ -9,3 +9,4 @@ db.conf
 *.yaml
 *_test.go
 goclient_apollo
+models/
