@@ -1,5 +1,0 @@
-package export
-
-func main() {
-
-}

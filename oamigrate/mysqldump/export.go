@@ -4,12 +4,12 @@ import (
 	. "excelfromdb/locallog"
 	"io/ioutil"
 	"os/exec"
-	"time"
+	"path"
 
 	"golang.org/x/sync/errgroup"
 )
 
-func export(tablename string) (string, error) {
+func export(tablename string, prepath string) error {
 
 	dbconfig, _ := GetConfig()
 
@@ -22,37 +22,41 @@ func export(tablename string) (string, error) {
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		Log.Fatal(err)
-		return "", err
+		return err
 	}
 
 	if err := cmd.Start(); err != nil {
 		Log.Fatal(err)
-		return "", err
+		return err
 	}
 
 	bytes, err := ioutil.ReadAll(stdout)
 	if err != nil {
 		Log.Fatal(err)
-		return "", err
+		return err
 	}
-	now := time.Now().Format("20060102150405")
+	// now := time.Now().Format("20060102150405")
 
-	backupPath := tablename + "_" + now + ".sql"
+	// backupPath := tablename + "_" + now + ".sql"
+	backupPath := path.Join(prepath, tablename+".sql")
+	Log.Info("backup path is ", prepath)
 	err = ioutil.WriteFile(backupPath, bytes, 0644)
 
 	if err != nil {
 		Log.Fatal(err)
-		return "", err
+		return err
 	}
-	return backupPath, nil
+	return nil
 }
 
-func FullExport() ([]string, error) {
+func FullExport() error {
 	// 使用 sync/errgroup 进行goroutine协程错误控制
+	prepath, err := mkpath()
+	if err != nil {
+		Log.Fatal(err)
+	}
 
 	group := new(errgroup.Group)
-	path := make(chan *string)
-	tablepaths := []string{}
 
 	_, tables := GetConfig()
 	for _, table := range tables {
@@ -60,9 +64,7 @@ func FullExport() ([]string, error) {
 		// 避免协程只引用最后一个变量，创建一个闭包函数的上下文变量
 		table := table
 		group.Go(func() error {
-			filepath, err := export(table)
-			path <- &filepath
-
+			err := export(table, prepath)
 			if err != nil {
 				Log.Fatal(table, " export failed")
 				return err
@@ -73,16 +75,11 @@ func FullExport() ([]string, error) {
 
 	}
 
-	// tablepaths = append(tablepaths, *(<-path))
-	// Log.Info(tablepaths)
 	if err := group.Wait(); err != nil {
 		Log.Fatal(err)
 	} else {
 		Log.Info("all table export success")
-		tablepaths = append(tablepaths, *(<-path))
-		Log.Info(tablepaths)
 	}
 
-	close(path)
-	return tablepaths, nil
+	return nil
 }
