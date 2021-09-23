@@ -14,26 +14,28 @@ func export(tablename string, prepath string) error {
 	dbconfig, _ := GetConfig()
 
 	var cmd *exec.Cmd
-	argv := []string{"--ssl-mode=disable", "--single-transaction", "-h" + dbconfig["host"],
+	// local setting
+	// argv := []string{"--ssl-mode=disable", "--single-transaction", "-h" + dbconfig["host"],
+	// 	"-u" + dbconfig["user"], "-p" + dbconfig["password"],
+	// 	"-P" + dbconfig["port"], "--databases", dbconfig["database"], "--tables", tablename}
+
+	// prod setting
+	argv := []string{"--single-transaction", "-h" + dbconfig["host"],
 		"-u" + dbconfig["user"], "-p" + dbconfig["password"],
 		"-P" + dbconfig["port"], "--databases", dbconfig["database"], "--tables", tablename}
 	cmd = exec.Command("mysqldump", argv...)
-
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		Log.Fatal(err)
-		return err
 	}
 
 	if err := cmd.Start(); err != nil {
 		Log.Fatal(err)
-		return err
 	}
 
 	bytes, err := ioutil.ReadAll(stdout)
 	if err != nil {
 		Log.Fatal(err)
-		return err
 	}
 	// now := time.Now().Format("20060102150405")
 
@@ -44,7 +46,6 @@ func export(tablename string, prepath string) error {
 
 	if err != nil {
 		Log.Fatal(err)
-		return err
 	}
 	return nil
 }
@@ -67,7 +68,6 @@ func FullExport() error {
 			err := export(table, prepath)
 			if err != nil {
 				Log.Fatal(table, " export failed")
-				return err
 			}
 			Log.Info(table, " export success")
 			return err

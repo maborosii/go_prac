@@ -11,8 +11,8 @@ import (
 func main() {
 	demo_ping := pinger.Ping{
 		Socket: pinger.Tcpsocket{
-			Host:    "127.0.0.1",
-			Port:    8001,
+			Host:    "19.50.74.165",
+			Port:    2379,
 			Timeout: time.Duration(1 * time.Second),
 		},
 		Successed:  0,
