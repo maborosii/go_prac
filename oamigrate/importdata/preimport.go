@@ -1,78 +1,87 @@
 package importdata
 
 import (
-	"embed"
 	. "excelfromdb/locallog"
-	"fmt"
-	"os"
-	"path/filepath"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
 
 	db "oamigrate/dbconfig"
 
 	_ "github.com/go-sql-driver/mysql"
-	"golang.org/x/sync/errgroup"
 	"xorm.io/xorm"
-	_ "xorm.io/xorm/schemas"
+	"xorm.io/xorm/schemas"
 )
 
-//go:embed db.conf
-var testconf embed.FS
+const suffix = "bygo"
 
-func ImportTable() error {
-	configfile := db.Newconfigfile()(testconf, "db.conf")
-	local_config := db.ImportConfig(configfile, "local_test")
+type tableGroup struct {
+	prefix string
+	names  tableNames
+}
 
+type tableNames []string
+
+func NewTableGroup(prefix string) *tableGroup {
+	return &tableGroup{
+		prefix: prefix,
+		names:  []string{},
+	}
+}
+
+func (tg *tableGroup) addTable(table string) {
+	tg.names = append(tg.names, table)
+}
+func (tg *tableGroup) cleanTable(f func(tableNames) tableNames) {
+	tg.names = f(tg.names)
+}
+
+func preTableHook(local_config *db.DBConfig) error {
 	engine, err := xorm.NewEngine("mysql", local_config.BuildConnectString())
 	if err != nil {
 		return err
 	}
-	// engine.ShowSQL(true)
-	// _, err = engine.ImportFile("/home/bonbon/golang/github.com/maborosii/oamigrate/sql/oamigrate/wf_step_def.sql")
-	// if err != nil {
-	// 	Log.Error(" import failed")
-	// 	return err
-	// }
-	// Log.Info(" import success")
-	// return nil
-
-	group := new(errgroup.Group)
-	files, err := getSqlFile("/home/bonbon/golang/github.com/maborosii/oamigrate/sql/oamigrate")
-	if err != nil {
-		fmt.Println(err)
+	var tables []*schemas.Table
+	var names tableNames
+	if tables, err = engine.DBMetas(); err != nil {
+		return err
 	}
-	for _, file := range files {
-		// 避免协程只引用最后一个变量，创建一个闭包函数的上下文变量
-		file := file
-		group.Go(func() error {
-
-			//ImportFile 线程不安全
-			_, err = engine.ImportFile(file)
-			if err != nil {
-				Log.Error(file, " import failed")
-				return err
-			}
-			Log.Info(file, " import success")
-			return nil
-		})
+	for _, table := range tables {
+		names = append(names, table.Name)
 	}
-
-	if err := group.Wait(); err != nil {
-		Log.Error(err)
-	} else {
-		Log.Info("all table import success")
-	}
+	Log.Info(names)
 	return nil
 }
 
-func getSqlFile(path string) ([]string, error) {
-	var files []string
+func getDelTable(wanted tableNames, all tableNames) []*tableGroup {
+	var delTables []*tableGroup
+	pattern := regexp.MustCompile(`20\d+`)
 
-	err := filepath.Walk(path, func(pathRoot string, info os.FileInfo, err error) error {
-		files = append(files, pathRoot)
-		return nil
-	})
-	if err != nil {
-		return nil, err
+	for _, prefix := range wanted {
+		delGroup := NewTableGroup(prefix)
+		for _, table := range all {
+			if strings.HasPrefix(table, prefix) && strings.HasSuffix(table, suffix) {
+				delGroup.addTable(table)
+			}
+		}
+
+		delGroup.cleanTable(func(tn tableNames) tableNames {
+			// 组内元素个数小于等于1时，直接返回
+			if len(tn) <= 1 {
+				return tn
+			}
+			// 组内元素个数大于1时，进行从大到小排序，并剔除最大的元素
+			sort.Slice(tn, func(i, j int) bool {
+				//这里不用做匹配选择，全量查找时已经将符合规则的表名添加到切片中
+				iSerial, _ := strconv.Atoi(pattern.FindAllString(tn[i], -1)[0])
+				jSerial, _ := strconv.Atoi(pattern.FindAllString(tn[j], -1)[0])
+				return iSerial > jSerial
+			})
+			return tn[1:]
+		},
+		)
+		delTables = append(delTables, delGroup)
 	}
-	return files[1:], nil
+	return delTables
 }
