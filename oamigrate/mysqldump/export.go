@@ -1,8 +1,8 @@
 package mysqldump
 
 import (
-	. "excelfromdb/locallog"
 	"io/ioutil"
+	. "oamigrate/log"
 	"os/exec"
 	"path"
 

@@ -3,7 +3,7 @@ package mysqldump
 
 import (
 	"embed"
-	. "excelfromdb/locallog"
+	. "oamigrate/log"
 	"reflect"
 	"strconv"
 

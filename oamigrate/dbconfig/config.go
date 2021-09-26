@@ -6,8 +6,8 @@ package dbconfig
 import (
 	"database/sql"
 	"embed"
-	. "excelfromdb/locallog"
 	"fmt"
+	. "oamigrate/log"
 
 	"gopkg.in/ini.v1"
 )

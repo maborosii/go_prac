@@ -1,21 +1,56 @@
 package importdata
 
 import (
-	. "excelfromdb/locallog"
+	"errors"
+	"fmt"
+	. "oamigrate/log"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
-
-	db "oamigrate/dbconfig"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+
 	"xorm.io/xorm"
 	"xorm.io/xorm/schemas"
 )
 
-const suffix = "bygo"
+func preTableHook(engine *xorm.Engine) error {
+	var tables []*schemas.Table
+	var allTableNames tableNames
+	tables, err := engine.DBMetas()
+	if err != nil {
+		Log.Error("get all tables information occur error")
+		return err
+	}
+	for _, table := range tables {
+		allTableNames = append(allTableNames, table.Name)
+	}
+	// Log.Info(names)
+	delTableGroup := getDelTable(wantedTables, allTableNames)
 
+	spreadTables := func(tg []*tableGroup) tableNames {
+		delTables := tableNames{}
+		for _, g := range tg {
+			delTables = append(delTables, g.names...)
+		}
+		return delTables
+	}(delTableGroup)
+
+	err = renameTable(engine, wantedTables)
+	if err != nil {
+		return err
+	}
+
+	if err = dropTables(engine, spreadTables); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// 删除的表分组
 type tableGroup struct {
 	prefix string
 	names  tableNames
@@ -37,23 +72,7 @@ func (tg *tableGroup) cleanTable(f func(tableNames) tableNames) {
 	tg.names = f(tg.names)
 }
 
-func preTableHook(local_config *db.DBConfig) error {
-	engine, err := xorm.NewEngine("mysql", local_config.BuildConnectString())
-	if err != nil {
-		return err
-	}
-	var tables []*schemas.Table
-	var names tableNames
-	if tables, err = engine.DBMetas(); err != nil {
-		return err
-	}
-	for _, table := range tables {
-		names = append(names, table.Name)
-	}
-	Log.Info(names)
-	return nil
-}
-
+// 获取删除表的集合
 func getDelTable(wanted tableNames, all tableNames) []*tableGroup {
 	var delTables []*tableGroup
 	pattern := regexp.MustCompile(`20\d+`)
@@ -84,4 +103,61 @@ func getDelTable(wanted tableNames, all tableNames) []*tableGroup {
 		delTables = append(delTables, delGroup)
 	}
 	return delTables
+}
+
+func dropTables(engine *xorm.Engine, tables tableNames) error {
+	// []string类型的实参 无法作为参数传入以[]interface{}类型为形参的函数,需要做转换
+
+	// 转换[]string 为[]interface{}
+	tableInterfaceList := make([]interface{}, len(tables))
+	for i, t := range tables {
+		//string convert to interface{}
+		tableInterfaceList[i] = t
+	}
+
+	// 	这个方法本身就做了事务处理
+	err := engine.DropTables(tableInterfaceList...)
+	if err != nil {
+		Log.Error("drop backup tables occur error")
+		return err
+	}
+	Log.Info("drop backup tables successs")
+	return nil
+}
+
+//重命名主表
+func renameTable(engine *xorm.Engine, tables tableNames) error {
+	for _, t := range tables {
+		//方法本身做了事务处理
+		isExist, _ := engine.IsTableExist(t)
+		if !isExist {
+			Log.Error(t, " is not exist! please check it")
+			return errors.New("table is not exists")
+		}
+	}
+
+	session := engine.NewSession()
+	defer session.Close()
+
+	err := session.Begin()
+	if err != nil {
+		Log.Error("starting reneme tables transaction occur error")
+		return err
+	}
+
+	for _, t := range tables {
+		newTableName := t + "_" + time.Now().Format("20060102") + "_" + suffix
+		renameSql := fmt.Sprintf("RENAME TABLE %s TO %s;", t, newTableName)
+
+		_, err = engine.Exec(renameSql)
+		if err != nil {
+			Log.Error("rename table ", t, " occur error")
+			session.Rollback()
+			return err
+		}
+		Log.Info("rename table ", t, " success")
+	}
+	Log.Info("rename all table transaction committed")
+	return session.Commit()
+
 }

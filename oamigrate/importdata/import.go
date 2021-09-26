@@ -3,7 +3,7 @@ package importdata
 import (
 	"embed"
 	"errors"
-	. "excelfromdb/locallog"
+	. "oamigrate/log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -22,11 +22,21 @@ func ImportTable() error {
 	configfile := db.Newconfigfile()(testconf, "db.conf")
 	local_config := db.ImportConfig(configfile, "local_test")
 
-	engine, err := xorm.NewEngine("mysql", local_config.BuildConnectString())
+	enginePre, err := xorm.NewEngine("mysql", local_config.BuildConnectString())
 	if err != nil {
 		return err
 	}
+	// engineImp := deepcopy.Copy(*enginePre).(xorm.Engine)
+	// 导入数据前置处理
+	if err = preTableHook(enginePre); err != nil {
+		Log.Error("preTableHook occur err")
+		return err
+	}
 
+	engineImp, err := xorm.NewEngine("mysql", local_config.BuildConnectString())
+	if err != nil {
+		return err
+	}
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
 	var countErr = 0
@@ -40,9 +50,9 @@ func ImportTable() error {
 		go func(file string) {
 			mutex.Lock()
 			Log.Info(file, " is processing")
-			_, err = engine.ImportFile(file)
+			_, err = engineImp.ImportFile(file)
 			if err != nil {
-				Log.Error(file, " import failed")
+				Log.Error(file, " import failed. ", "err info：", err)
 				countErr += 1
 			} else {
 				Log.Info(file, " import success")
@@ -52,39 +62,13 @@ func ImportTable() error {
 		}(file)
 	}
 	wg.Wait()
+
 	if countErr != 0 {
 		errImportAll := errors.New("some tables import failed")
 		Log.Error(errImportAll)
 		return errImportAll
 	}
 	return nil
-
-	// group := new(errgroup.Group)
-	// files, err := getSqlFile("/home/bonbon/golang/github.com/maborosii/oamigrate/sql/oamigrate")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// for _, file := range files {
-	// 	// 避免协程只引用最后一个变量，创建一个闭包函数的上下文变量
-	// 	file := file
-	// 	group.Go(func() error {
-	// 		//ImportFile 线程不安全
-	// 		_, err = engine.ImportFile(file)
-	// 		if err != nil {
-	// 			Log.Error(file, " import failed")
-	// 			return err
-	// 		}
-	// 		Log.Info(file, " import success")
-	// 		return nil
-	// 	})
-	// }
-
-	// if err := group.Wait(); err != nil {
-	// 	Log.Error(err)
-	// } else {
-	// 	Log.Info("all table import success")
-	// }
-	// return nil
 }
 
 func getSqlFile(path string) ([]string, error) {
