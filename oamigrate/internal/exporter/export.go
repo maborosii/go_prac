@@ -1,29 +1,32 @@
-package mysqldump
+package exporter
 
 import (
 	"io/ioutil"
-	. "oamigrate/log"
+	. "oamigrate/pkg/log"
 	"os/exec"
 	"path"
+
+	c "oamigrate/config"
 
 	"golang.org/x/sync/errgroup"
 )
 
 func export(tablename string, prepath string) error {
 
-	dbconfig, _ := GetConfig()
+	dbConfig := c.ExportDbConfig
 
 	var cmd *exec.Cmd
 	// local setting
-	// argv := []string{"--ssl-mode=disable", "--single-transaction", "-h" + dbconfig["host"],
-	// 	"-u" + dbconfig["user"], "-p" + dbconfig["password"],
-	// 	"-P" + dbconfig["port"], "--databases", dbconfig["database"], "--tables", tablename}
+	argv := []string{"--ssl-mode=disable", "--single-transaction", "-h" + dbConfig["host"],
+		"-u" + dbConfig["user"], "-p" + dbConfig["password"],
+		"-P" + dbConfig["port"], "--databases", dbConfig["database"], "--tables", tablename}
 
 	// prod setting
-	argv := []string{"--single-transaction", "-h" + dbconfig["host"],
-		"-u" + dbconfig["user"], "-p" + dbconfig["password"],
-		"-P" + dbconfig["port"], "--databases", dbconfig["database"], "--tables", tablename}
+	// argv := []string{"--single-transaction", "-h" + dbconfig["host"],
+	// 	"-u" + dbconfig["user"], "-p" + dbconfig["password"],
+	// 	"-P" + dbconfig["port"], "--databases", dbconfig["database"], "--tables", tablename}
 	cmd = exec.Command("mysqldump", argv...)
+
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		Log.Fatal(err)
@@ -59,7 +62,7 @@ func FullExport() error {
 
 	group := new(errgroup.Group)
 
-	_, tables := GetConfig()
+	tables := c.Tables
 	for _, table := range tables {
 
 		// 避免协程只引用最后一个变量，创建一个闭包函数的上下文变量

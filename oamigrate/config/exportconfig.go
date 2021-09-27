@@ -1,9 +1,8 @@
-// package mysqldump
-package mysqldump
+package config
 
 import (
 	"embed"
-	. "oamigrate/log"
+	. "oamigrate/pkg/log"
 	"reflect"
 	"strconv"
 
@@ -13,7 +12,7 @@ import (
 //go:embed export.yaml
 var exportfile embed.FS
 
-func GetConfig() (map[string]string, []string) {
+func getExportConfig() (map[string]string, []string) {
 
 	tables := []string{}
 	dbconfig := map[string]string{}
@@ -43,3 +42,5 @@ func GetConfig() (map[string]string, []string) {
 
 	return dbconfig, tables
 }
+
+var ExportDbConfig, Tables = getExportConfig()

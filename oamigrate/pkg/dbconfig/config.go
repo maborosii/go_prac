@@ -7,13 +7,13 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	. "oamigrate/log"
+	. "oamigrate/pkg/log"
 
 	"gopkg.in/ini.v1"
 )
 
 type configfile struct {
-	fileinmem embed.FS
+	fileInMem embed.FS
 	name      string
 }
 
@@ -21,7 +21,7 @@ type CreateConfigfile func(realfile embed.FS, filename string) *configfile
 
 func Newconfigfile() CreateConfigfile {
 	return func(realfile embed.FS, filename string) *configfile {
-		return &configfile{fileinmem: realfile, name: filename}
+		return &configfile{fileInMem: realfile, name: filename}
 	}
 
 }
@@ -37,7 +37,7 @@ type DBConfig struct {
 
 func ImportConfig(file *configfile, node string) *DBConfig {
 
-	readfile, err := file.fileinmem.Open(file.name)
+	readfile, err := file.fileInMem.Open(file.name)
 	if err != nil {
 		Log.Fatal(err)
 	}

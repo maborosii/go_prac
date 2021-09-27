@@ -17,9 +17,6 @@ func NewLogger() *logrus.Logger {
 	}
 
 	Log = logrus.New()
-	// Log.SetFormatter(&nested.Formatter{
-	// 	TimestampFormat: time.RFC3339,
-	// })
 	Log.SetFormatter(&logrus.JSONFormatter{TimestampFormat: time.RFC3339})
 	Log.SetReportCaller(true)
 	return Log

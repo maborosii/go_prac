@@ -1,4 +1,4 @@
-package mysqldump
+package exporter
 
 import (
 	"flag"

@@ -1,20 +1,26 @@
-package importdata
+package importer
 
 import (
 	"errors"
 	"fmt"
-	. "oamigrate/log"
+	. "oamigrate/pkg/log"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	c "oamigrate/config"
+
 	_ "github.com/go-sql-driver/mysql"
 
 	"xorm.io/xorm"
 	"xorm.io/xorm/schemas"
 )
+
+const suffix = "bygo"
+
+var wantedTables = c.Tables
 
 func preTableHook(engine *xorm.Engine) error {
 	var tables []*schemas.Table

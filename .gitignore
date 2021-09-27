@@ -3,10 +3,13 @@ _*
 .*
 .vscode/
 !.gitignore
-db.conf
+*.conf
 *.sql
 *.xlsx
 *.yaml
-*_test.go
 goclient_apollo
 models/
+*.log
+export
+import
+export-local

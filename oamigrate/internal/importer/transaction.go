@@ -1,4 +1,4 @@
-package importdata
+package importer
 
 import "xorm.io/xorm"
 

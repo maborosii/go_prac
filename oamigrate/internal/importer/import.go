@@ -1,39 +1,31 @@
-package importdata
+package importer
 
 import (
-	"embed"
 	"errors"
-	. "oamigrate/log"
+	. "oamigrate/pkg/log"
 	"os"
 	"path/filepath"
 	"sync"
 
-	db "oamigrate/dbconfig"
+	c "oamigrate/config"
 
 	_ "github.com/go-sql-driver/mysql"
 	"xorm.io/xorm"
 	_ "xorm.io/xorm/schemas"
 )
 
-//go:embed db.conf
-var testconf embed.FS
-
 func ImportTable() error {
-	configfile := db.Newconfigfile()(testconf, "db.conf")
-	local_config := db.ImportConfig(configfile, "local_test")
-
-	enginePre, err := xorm.NewEngine("mysql", local_config.BuildConnectString())
+	dbConfig := c.ImportConfig
+	enginePre, err := xorm.NewEngine("mysql", dbConfig.BuildConnectString())
 	if err != nil {
 		return err
 	}
-	// engineImp := deepcopy.Copy(*enginePre).(xorm.Engine)
-	// 导入数据前置处理
 	if err = preTableHook(enginePre); err != nil {
 		Log.Error("preTableHook occur err")
 		return err
 	}
 
-	engineImp, err := xorm.NewEngine("mysql", local_config.BuildConnectString())
+	engineImp, err := xorm.NewEngine("mysql", dbConfig.BuildConnectString())
 	if err != nil {
 		return err
 	}
