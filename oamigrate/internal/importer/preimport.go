@@ -22,6 +22,7 @@ const suffix = "bygo"
 
 var wantedTables = c.Tables
 
+// 导入表的前置操作
 func preTableHook(engine *xorm.Engine) error {
 	var tables []*schemas.Table
 	var allTableNames tableNames
@@ -33,7 +34,6 @@ func preTableHook(engine *xorm.Engine) error {
 	for _, table := range tables {
 		allTableNames = append(allTableNames, table.Name)
 	}
-	// Log.Info(names)
 	delTableGroup := getDelTable(wantedTables, allTableNames)
 
 	spreadTables := func(tg []*tableGroup) tableNames {
@@ -92,9 +92,10 @@ func getDelTable(wanted tableNames, all tableNames) []*tableGroup {
 		}
 
 		delGroup.cleanTable(func(tn tableNames) tableNames {
-			// 组内元素个数小于等于1时，直接返回
+			// 组内元素个数小于等于1时，直接空切片
 			if len(tn) <= 1 {
-				return tn
+				emptySlice := make([]string, 0)
+				return emptySlice
 			}
 			// 组内元素个数大于1时，进行从大到小排序，并剔除最大的元素
 			sort.Slice(tn, func(i, j int) bool {
@@ -152,18 +153,22 @@ func renameTable(engine *xorm.Engine, tables tableNames) error {
 	}
 
 	for _, t := range tables {
+		// todo: 当次重复导入
 		newTableName := t + "_" + time.Now().Format("20060102") + "_" + suffix
 		renameSql := fmt.Sprintf("RENAME TABLE %s TO %s;", t, newTableName)
 
-		_, err = engine.Exec(renameSql)
-		if err != nil {
-			Log.Error("rename table ", t, " occur error")
-			session.Rollback()
-			return err
+		backupTableIsExist, _ := session.IsTableExist(newTableName)
+
+		if !backupTableIsExist {
+			_, err = session.Exec(renameSql)
+			if err != nil {
+				Log.Error("rename table ", t, " occur error")
+				session.Rollback()
+				return err
+			}
+			Log.Info("rename table ", t, " success")
 		}
-		Log.Info("rename table ", t, " success")
 	}
 	Log.Info("rename all table transaction committed")
 	return session.Commit()
-
 }

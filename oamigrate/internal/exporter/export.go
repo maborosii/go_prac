@@ -14,17 +14,19 @@ import (
 func export(tablename string, prepath string) error {
 
 	dbConfig := c.ExportDbConfig
+	Log.Info(dbConfig)
 
 	var cmd *exec.Cmd
 	// local setting
 	argv := []string{"--ssl-mode=disable", "--single-transaction", "-h" + dbConfig["host"],
 		"-u" + dbConfig["user"], "-p" + dbConfig["password"],
 		"-P" + dbConfig["port"], "--databases", dbConfig["database"], "--tables", tablename}
+	Log.Info(argv)
 
 	// prod setting
-	// argv := []string{"--single-transaction", "-h" + dbconfig["host"],
-	// 	"-u" + dbconfig["user"], "-p" + dbconfig["password"],
-	// 	"-P" + dbconfig["port"], "--databases", dbconfig["database"], "--tables", tablename}
+	// argv := []string{"--single-transaction", "-h" + dbConfig["host"],
+	// 	"-u" + dbConfig["user"], "-p" + dbConfig["password"],
+	// 	"-P" + dbConfig["port"], "--databases", dbConfig["database"], "--tables", tablename}
 	cmd = exec.Command("mysqldump", argv...)
 
 	stdout, err := cmd.StdoutPipe()
@@ -40,9 +42,7 @@ func export(tablename string, prepath string) error {
 	if err != nil {
 		Log.Fatal(err)
 	}
-	// now := time.Now().Format("20060102150405")
 
-	// backupPath := tablename + "_" + now + ".sql"
 	backupPath := path.Join(prepath, tablename+".sql")
 	Log.Info("backup path is ", prepath)
 	err = ioutil.WriteFile(backupPath, bytes, 0644)

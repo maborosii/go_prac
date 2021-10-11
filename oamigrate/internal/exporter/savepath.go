@@ -14,7 +14,7 @@ func mkpath() (string, error) {
 	}
 	path := filepath.Join(prepath, "sql/oamigrate")
 	isDirExists := func(path string) bool {
-		_, err = os.Stat(path)
+		_, err := os.Stat(path)
 		return err == nil || os.IsExist(err)
 	}
 
@@ -34,13 +34,13 @@ func getpath() (string, error) {
 
 	allargs := os.Args
 	if len(allargs) == 1 {
-		default_path, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		defaultPath, err := filepath.Abs(filepath.Dir(os.Args[0]))
 		if err != nil {
 			return "", err
 		}
-		return default_path, nil
+		return defaultPath, nil
 	}
-	customize_path := flag.String("path", os.Args[0], "sqlfile's location")
+	customizePath := flag.String("path", os.Args[0], "sqlfile's location")
 	flag.Parse()
-	return *customize_path, nil
+	return *customizePath, nil
 }

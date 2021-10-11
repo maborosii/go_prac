@@ -16,6 +16,9 @@ import (
 
 func ImportTable() error {
 	dbConfig := c.ImportConfig
+	importPath := c.ImportPath
+
+	// 导入数据前置处理，rename表，删除多余备份表
 	enginePre, err := xorm.NewEngine("mysql", dbConfig.BuildConnectString())
 	if err != nil {
 		return err
@@ -25,6 +28,7 @@ func ImportTable() error {
 		return err
 	}
 
+	// 导入数据
 	engineImp, err := xorm.NewEngine("mysql", dbConfig.BuildConnectString())
 	if err != nil {
 		return err
@@ -32,17 +36,22 @@ func ImportTable() error {
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
 	var countErr = 0
-	files, err := getSqlFile("/home/bonbon/golang/github.com/maborosii/oamigrate/sql/oamigrate")
+	files, err := getSqlFile(importPath)
+
 	if err != nil {
 		Log.Error(err)
 		return err
+	}
+	if len(files) < 1 {
+		Log.Error("sql file is not exists")
+		return errors.New("sql file is not exists")
 	}
 	for _, file := range files {
 		wg.Add(1)
 		go func(file string) {
 			mutex.Lock()
 			Log.Info(file, " is processing")
-			_, err = engineImp.ImportFile(file)
+			_, err := engineImp.ImportFile(file)
 			if err != nil {
 				Log.Error(file, " import failed. ", "err info：", err)
 				countErr += 1
@@ -60,11 +69,32 @@ func ImportTable() error {
 		Log.Error(errImportAll)
 		return errImportAll
 	}
+
+	// 导出数据后置处理，修改各项目passid
+	enginePost, err := xorm.NewEngine("mysql", dbConfig.BuildConnectString())
+	if err != nil {
+		return err
+	}
+	if err = postTableHook(enginePost); err != nil {
+		Log.Error(err)
+		return err
+	}
 	return nil
 }
 
 func getSqlFile(path string) ([]string, error) {
 	var files []string
+
+	//检查sql文件路径是否存在
+	isDirExists := func(path string) bool {
+		_, err := os.Stat(path)
+		return err == nil || os.IsExist(err)
+	}
+
+	if !isDirExists(path) {
+		Log.Error(path, " is not exists")
+		return nil, errors.New("path is not exists")
+	}
 
 	err := filepath.Walk(path, func(pathRoot string, info os.FileInfo, err error) error {
 		files = append(files, pathRoot)
