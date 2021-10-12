@@ -31,6 +31,12 @@ func preTableHook(engine *xorm.Engine) error {
 		Log.Error("get all tables information occur error")
 		return err
 	}
+
+	err = renameTable(engine, wantedTables)
+	if err != nil {
+		return err
+	}
+
 	for _, table := range tables {
 		allTableNames = append(allTableNames, table.Name)
 	}
@@ -43,11 +49,6 @@ func preTableHook(engine *xorm.Engine) error {
 		}
 		return delTables
 	}(delTableGroup)
-
-	err = renameTable(engine, wantedTables)
-	if err != nil {
-		return err
-	}
 
 	if err = dropTables(engine, spreadTables); err != nil {
 		return err
@@ -93,7 +94,7 @@ func getDelTable(wanted tableNames, all tableNames) []*tableGroup {
 
 		delGroup.cleanTable(func(tn tableNames) tableNames {
 			// 组内元素个数小于等于1时，直接空切片
-			if len(tn) <= 1 {
+			if len(tn) <= 2 {
 				emptySlice := make([]string, 0)
 				return emptySlice
 			}
@@ -104,7 +105,7 @@ func getDelTable(wanted tableNames, all tableNames) []*tableGroup {
 				jSerial, _ := strconv.Atoi(pattern.FindAllString(tn[j], -1)[0])
 				return iSerial > jSerial
 			})
-			return tn[1:]
+			return tn[2:]
 		},
 		)
 		delTables = append(delTables, delGroup)

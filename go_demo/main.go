@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // func get_name() (string, string, string) {
 // 	return "a", "b", "c"
@@ -110,9 +113,11 @@ func main() {
 	// 	fmt.Println("fail")
 	// }
 
-	var a Integer = 1
-	var b LessAddr = &a
-	fmt.Println(b.Less(3))
+	// var a Integer = 1
+	// var b LessAddr = &a
+	// fmt.Println(b.Less(3))
+
+	fmt.Println(time.Now().Unix())
 
 }
 
